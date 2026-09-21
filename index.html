@@ -325,8 +325,14 @@ const clean=o=>JSON.parse(JSON.stringify(o));
 const reached=l=>{const m=l.maxStage!=null?RANK[l.maxStage]:RANK[l.stage];return m==null?0:m};
 
 /* ---------- storage layer (Vercel API + Redis) ---------- */
-let PW=null;
-try{PW=localStorage.getItem('pears_crm_pw')}catch(e){}
+/* ===== PASSWORD ===== 
+   Type your CRM_PASSWORD between the quotes below (the same value you set in Vercel).
+   With a password here, the login screen is skipped. Anyone who can open the page
+   can read this value in the page source, so only use it if that is acceptable.
+   Leave it empty ('') to keep the login screen. */
+const BUILT_IN_PASSWORD='';
+let PW=BUILT_IN_PASSWORD||null;
+if(!PW){try{PW=localStorage.getItem('pears_crm_pw')}catch(e){}}
 async function api(method,body,q){
   const r=await fetch('/api/leads'+(q||''),{method,headers:{'Content-Type':'application/json','x-crm-password':PW||''},body:body?JSON.stringify(body):undefined});
   if(r.status===401){signOut(true);throw new Error('Wrong password')}
@@ -770,6 +776,7 @@ document.addEventListener('drop',e=>{const c=e.target.closest&&e.target.closest(
 renderAll();
 $('#lgform').addEventListener('submit',e=>{e.preventDefault();tryLogin()});
 $('#signout').addEventListener('click',()=>signOut(false));
+if(BUILT_IN_PASSWORD)$('#signout').hidden=true;
 if(PW){loadAll().then(startPolling).catch(e=>{state.loading=false;renderAll();if(e.message!=='Wrong password')$('#banner').innerHTML='<div class="banner">Could not reach the server: '+esc(e.message)+'</div>'})}
 else showLogin('');
 })();
